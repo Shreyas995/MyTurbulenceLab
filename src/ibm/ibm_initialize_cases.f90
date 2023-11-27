@@ -155,7 +155,7 @@ subroutine GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob, IBM_cas
   ! ================================================================== !
   ! Check length of the gap vector before code execution
   if (IBM_case < 8) then
-    if (abs(nob_e(ip+ii) - nob_b(ip+ii)) < 3) then
+    if (abs(nob_e(ip+ii) - nob_b(ip+ii)+1) < 3) then
       WRITE (*,*) 'IBM_CASE:', IBM_case
       call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Less than 3 solid points. Check geometry')
       call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
