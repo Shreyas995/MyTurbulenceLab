@@ -48,16 +48,13 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
   integer(wi), parameter                               :: ims_pro=0, ims_npro_i=1, ims_npro_k=1, ims_npro=0 
 #endif
 #endif
-  
+  integer(wi)                                          :: ncrest, hhill, whill, hill_slope
   integer(wi)                                          :: istart, iend, jstart, jend, kstart, kend
-  integer(wp)                                          :: y_resoln
+  integer(wi)                                          :: i, j, k
   real(wp)                                             :: dx
-  integer(wi)                                          :: i, j, k, hill_height
   ! ================================================================== !
   ! Decleration of variables
-  y_resoln = 9                         ! Ratio of Doamin height and height of hill
-  hill_height = int(g(2)%size/y_resoln)      ! Maximum height of the hill
-  dx = (pi_wp/(g(1)%size))                ! Unit cell width of hill base
+  dx = (2*pi_wp/(g(1)%size))                ! Unit cell width of hill base
 
   ! ================================================================== !
   ! global array indicies for each mpi task (indices start with 0)
@@ -76,13 +73,12 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
 #endif
 
   ! geometry
+  ncrest=ibm_geo%number; hhill=ibm_geo%height; whill=ibm_geo%width; hill_slope=ibm_geo%hill_slope 
   wrk3d(:,:,:) = 0.0_wp
   do i = 1,imax
     do k = 1,kmax
-      do j = 1,(hill_height)
-        if ((j+jstart) <= 2 ) then
-          wrk3d(i,j,k) = 1.0_wp
-        else if ((j+jstart) < ((hill_height)*(sin(pi_wp + (i+istart)*dx)+1))) then
+      do j = 1,hhill
+        if ((j+jstart) < ((hhill/(2**hill_slope))*(1 + cos(dx*(i + istart)))**hill_slope)) then
           wrk3d(i,j,k) = 1.0_wp
         else
           wrk3d(i,j,k) = 0.0_wp
@@ -101,10 +97,8 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
     ! create epsp field
     do i = 1,imax
       do k = 1,kmax
-        do j = 1,(hill_height)
-          if ((j+jstart) <= 2 ) then
-            wrk3d(i,j,k) = 1.0_wp
-          else if ((j+jstart) < ((hill_height)*(sin(pi_wp + (i+istart)*dx)+1))) then
+        do j = 1,hhill
+          if ((j+jstart) < ((hhill/(2**hill_slope))*(1 + cos(dx*(i + istart)))**hill_slope)) then
             wrk3d(i,j,k) = 1.0_wp
           else
             wrk3d(i,j,k) = 0.0_wp

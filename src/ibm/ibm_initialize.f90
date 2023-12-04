@@ -108,13 +108,13 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     flag_epsp = .false.
     call IBM_IO_READ(wrk3d, flag_epsp)
   else
-    if (xbars_geo%name == 'xbars') then
+    if (ibm_geo%name == 'xbars') then
       call IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
-    else if (xbars_geo%name == 'hill') then
+    else if (ibm_geo%name == 'hill') then
       call IBM_GENERATE_GEOMETRY_HILL(wrk3d)
-    else if (xbars_geo%name == 'valley') then
+    else if (ibm_geo%name == 'valley') then
       call IBM_GENERATE_GEOMETRY_VALLEY(wrk3d)
-    else if (xbars_geo%name == 'box') then
+    else if (ibm_geo%name == 'box') then
       call IBM_GENERATE_GEOMETRY_BOX(wrk3d)
     else 
       call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
@@ -137,13 +137,13 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
       flag_epsp = .true.
       call IBM_IO_READ(wrk3d, flag_epsp)
     else
-      if (xbars_geo%name == 'xbars') then
+      if (ibm_geo%name == 'xbars') then
         continue
-      else if (xbars_geo%name == 'hill') then
+      else if (ibm_geo%name == 'hill') then
         continue
-      else if (xbars_geo%name == 'valley') then
+      else if (ibm_geo%name == 'valley') then
         continue
-      else if (xbars_geo%name == 'box') then
+      else if (ibm_geo%name == 'box') then
         continue
       else
         call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')

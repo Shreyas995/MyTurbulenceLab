@@ -242,7 +242,6 @@ contains
         ! -----------------------------------------------------------------------
         select case (coriolis%type)
         case (EQNS_EXPLICIT)
-            print *, 'Explicit eqn'
             do  ii = 1, field_sz
                 r(ii, 1) = r(ii, 1) + coriolis%vector(3)*vec(ii, 2) - coriolis%vector(2)*vec(ii, 3)
                 r(ii, 2) = r(ii, 2) + coriolis%vector(1)*vec(ii, 3) - coriolis%vector(3)*vec(ii, 1)

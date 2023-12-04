@@ -144,7 +144,7 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
   integer(wi),                             intent(out) :: ib
   integer(wi),                             intent(in ) :: ip_il, ip_ir, nlines, plane
 
-  integer(wi)                                          :: kflu, gap, psol
+  integer(wi)                                          :: kflu, gap, ip_sol
   integer(wi)                                          :: ip_fl, iu_fl, iu_ir
 
   ! ================================================================== !
@@ -220,7 +220,7 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
   end select
   ! -----------------------------------------------------------------
   ! set interfaces (left and right)
-  ia     = ia + 1 
+  ia     = ia + 1
   xa(ia) = g%nodes(ip_il)  
   if (case == 9) xa(ia) = - g%nodes(nflu)
   if (case == 8) xa(ia) = - g%nodes(nflu - 1)
@@ -277,8 +277,8 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
   ! build gap vector where splines are evaluated (here: with interface points)
   select case (case)
   case(7)
-    psol = (g%size - ip_il + 1) + ip_ir
-    do gap = 1, psol
+    ip_sol = (g%size - ip_il + 1) + ip_ir
+    do gap = 1, ip_sol
       ib      = ib + 1
       if ((ip_il + gap - 1) <= g%size) then
         xb(ib)  = g%nodes(ip_il + gap - 1) 

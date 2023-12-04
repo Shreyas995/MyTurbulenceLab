@@ -70,7 +70,7 @@ module IBM_VARS
   logical                      :: ims_pro_ibm_z = .FALSE.
   
   ! ibm_dt geometry type 
-  type(ibm_geo_dt)             :: xbars_geo                   ! create new geometry here
+  type(ibm_geo_dt)             :: ibm_geo                   ! create new geometry here
 
   ! name of io eps
   character(len=32), parameter :: eps_name       = 'eps0.1'

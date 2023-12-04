@@ -67,7 +67,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   if ( ims_npro_i > 1 ) then
     nyz = ims_size_i(idi)
   else
-#endif 
+#endif
   nyz = jmax * kmax 
 #ifdef USE_MPI
   end if

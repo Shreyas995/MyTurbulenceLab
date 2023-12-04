@@ -48,16 +48,12 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
   integer(wi), parameter                               :: ims_pro=0, ims_npro_i=1, ims_npro_k=1, ims_npro=0 
 #endif
 #endif
-  
+  integer(wi)                                          :: ncrest, hhill, whill, hill_slope
   integer(wi)                                          :: istart, iend, jstart, jend, kstart, kend
-  integer(wp)                                          :: y_resoln, bottom_buffer
   real(wp)                                             :: dx
-  integer(wi)                                          :: i, j, k, hill_height
+  integer(wi)                                          :: i, j, k
   ! ================================================================== !
   ! Decleration of variables
-  bottom_buffer = 3                     ! Buffer points required for better interpolation of splines
-  y_resoln = 10                         ! Ratio of Doamin height and height of hill
-  hill_height = int(g(2)%size/y_resoln)      ! Maximum height of the hill
   dx = (pi_wp/(g(1)%size))                ! Unit cell width of hill base
 
   ! ================================================================== !
@@ -85,19 +81,18 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
 #endif
 
   ! geometry
+  ncrest=ibm_geo%number; hhill=ibm_geo%height; whill=ibm_geo%width; hill_slope=ibm_geo%hill_slope 
   wrk3d(:,:,:) = 0.0_wp
 
   do i = 1,imax
     do k = 1,kmax
-      do j = 1,(hill_height + bottom_buffer)
+      do j = 1,hhill
         if (((i + istart) > 3) .and. ((i + istart) < (g(1)%size - 2))) then
           if (((k + kstart) > 3) .and. ((k + kstart) < (g(3)%size - 2))) then
-            if ((j+jstart) <= 4 ) then
-              wrk3d(i,j,k) = 1.0_wp
-            else if ((j+jstart) < ((hill_height+bottom_buffer)*sin((i+istart)*dx))) then
+            if ((j+jstart) < ((hhill)/2**hill_slope)*((sin((i+istart)*dx))**hill_slope)) then
               wrk3d(i,j,k) = 1.0_wp
             else
-            ! write(*,*) 'Fluid element in X=1 and X = end plane '
+              ! write(*,*) 'Fluid element in X=1 and X = end plane '
               wrk3d(i,j,k) = 0.0_wp
             end if
           end if
@@ -116,15 +111,13 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
     ! create epsp field
     do i = 1,imax
       do k = 1,kmax
-        do j = 1,(hill_height + bottom_buffer)
+        do j = 1,hhill
           if (((i + istart) > 3) .and. ((i + istart) < (g(1)%size - 2))) then
             if (((k + kstart) > 3) .and. ((k + kstart) < (g(3)%size - 2))) then
-              if ((j+jstart) <= 4 ) then
-                wrk3d(i,j,k) = 1.0_wp
-              else if ((j+jstart) < ((hill_height+bottom_buffer)*sin((i+istart)*dx))) then
+              if ((j+jstart) < ((hhill)*sin((i+istart)*dx))) then
                 wrk3d(i,j,k) = 1.0_wp
               else
-              ! write(*,*) 'Fluid element in X=1 and X = end plane '
+                ! write(*,*) 'Fluid element in X=1 and X = end plane '
                 wrk3d(i,j,k) = 0.0_wp
               end if
             end if

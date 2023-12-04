@@ -29,7 +29,7 @@ elseif( ${BUILD_TYPE} STREQUAL "SERIAL" )
    set(CMAKE_Fortran_COMPILER gfortran-12)
    set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic -fallow-argument-mismatch")
    add_definitions(-DUSE_FFTW) # -DIBM_DEBUG) # -DTRACE_ON)
-   set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native -funroll-loops")
+   set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -ffpe-summary=none -O2 -ffinite-math-only -mtune=native -march=native -funroll-loops")
    set(CMAKE_BUILD_TYPE RELEASE)
 # Compiler for debug build
 elseif( ${BUILD_TYPE} STREQUAL "DEBUG" )
