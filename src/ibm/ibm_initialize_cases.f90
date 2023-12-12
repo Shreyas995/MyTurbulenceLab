@@ -62,7 +62,7 @@ subroutine IBM_INITIALIZE_CASES(g, nlines, isize_nob, isize_nob_be, nob, nob_b, 
             ! 2. case: object is semi-immersed - periodic case
             IBM_case((iob-1)*nlines + ii) = 2
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case, ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
 
           else if ( ( nob_e(ip+ii) <= (g%size - nflu) ) .and. ( g%periodic .eqv. .false. ) &
@@ -70,7 +70,7 @@ subroutine IBM_INITIALIZE_CASES(g, nlines, isize_nob, isize_nob_be, nob, nob_b, 
             ! 3. case: object is semi-immersed - non-periodic case - lower boundary
             IBM_case((iob-1)*nlines + ii) = 3
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case, ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
             
           else if ( (nob_e(ip+ii) == 1 + nob_b(ip+ii)) .and. (g%periodic .eqv. .false.) ) then
@@ -93,21 +93,21 @@ subroutine IBM_INITIALIZE_CASES(g, nlines, isize_nob, isize_nob_be, nob, nob_b, 
             ! 4. case: object is fully immersed
             IBM_case((iob-1)*nlines + ii) = 4
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case, ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
 
           else if ( (nob_e(ip+ii) == g%size) .and. (g%periodic .eqv. .true.) ) then
             ! 5. case: object is semi-immersed - periodic case
             IBM_case((iob-1)*nlines + ii) = 5
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case, ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
 
           else if ( (nob_e(ip+ii) == g%size) .and. (g%periodic .eqv. .false.) ) then  ! e.g. in vertical direction
             ! 6. case: object is semi-immersed - non-periodic case - upper boundary
             IBM_case((iob-1)*nlines + ii) = 6
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case, ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
 
           else if ( ( (nob_e(ip+ii)) < (nob_b(ip+ii)) ) .and. (g%periodic .eqv. .true.) ) then

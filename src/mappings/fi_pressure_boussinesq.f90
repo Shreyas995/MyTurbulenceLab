@@ -163,7 +163,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     ! Coriolis Forcing term
     if (Id_Case == 4) then
-        ! call FI_CORIOLIS(coriolis,imax, jmax, kmax, tmp, q)
+        call FI_CORIOLIS(coriolis,imax, jmax, kmax, tmp, q)
         tmp3        => tmp(:, 1)
         tmp4        => tmp(:, 2)
         tmp5        => tmp(:, 3)
