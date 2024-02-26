@@ -9,10 +9,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: imode_eqns, imode_ibm, imode_elliptic
+q    use TLAB_VARS, only: bbackground, pbackground, rbackground, ribackground, epbackground
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_VARS, only: buoyancy, coriolis
-    use TLAB_VARS, only: inb_txc, pdecomposition
+    use TLAB_VARS, only: pdecomposition
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk2d
     use THERMO_ANELASTIC
@@ -22,7 +22,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use OPR_ELLIPTIC
     use FI_SOURCES
     use OPR_FILTERS
-    use IO_FIELDS
+
     use THERMO_ANELASTIC
 
     implicit none
@@ -31,7 +31,9 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     real(wp), intent(in) :: s(isize_field, *)
     real(wp), intent(out) :: p(isize_field)
     real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
-    real(wp), intent(inout) :: tmp(isize_field, inb_txc - 3)
+    real(wp), intent(inout) :: tmp(isize_field, 7)
+    real(wp) dummy
+    real(wp) dummy2(isize_field, 1)
 
     target q, tmp, s
 ! -----------------------------------------------------------------------
@@ -39,10 +41,6 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     integer(wi) iq
     integer(wi) siz, srt, end
     integer(wi) :: i
-
-! -----------------------------------------------------------------------
-    real(wp) dummy
-
 ! -----------------------------------------------------------------------
 #ifdef USE_BLAS
     integer ILEN
@@ -56,7 +54,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
 ! #######################################################################
     bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
-
+    dummy2 = 0.0_wp
     p = 0.0_wp
     tmp = 0.0_wp
 
@@ -65,33 +63,39 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     v => q(:, 2)
     w => q(:, 3)
 
+! Definition of the cases
+
+    ! Case 0: Pressure with accumulation of all terms
+    ! Case 1: Advection diffusion together
+    ! Case 2: Only Advection
+    ! Case 3: Only Diffusion
+    ! Case 4: Coriolis fores
+    ! Case 5: Buoyancy force
+
 ! #######################################################################
 ! Sources
-    if (pdecomposition%name == 'total') then 
-        call FI_SOURCES_FLOW(q, s, tmp, tmp1)
-    end if
+    call FI_SOURCES_FLOW(q, s, tmp, tmp1)
 
     tmp3 => tmp(:, 1)
     tmp4 => tmp(:, 2)
     tmp5 => tmp(:, 3)
-
-    if (pdecomposition%name /= 'total') then 
-        tmp3 = 0.0_wp
-        tmp4 = 0.0_wp
-        tmp5 = 0.0_wp
-        tmp6 => tmp(:, 4)
-        tmp7 => tmp(:, 5)
-        tmp8 => tmp(:, 6)
-        tmp9 => tmp(:, 7)
-    end if
+    tmp6 => tmp(:, 4)
+    tmp7 => tmp(:, 5)
+    tmp8 => tmp(:, 6)
+    tmp9 => tmp(:, 7)
 
 ! If IBM, then use modified fields for derivatives
     if (imode_ibm == 1) ibm_burgers = .true.
-
-    if (pdecomposition%name == 'advdiff' .OR. pdecomposition%name == 'total' .OR. pdecomposition%name == 'advection') then
+    if (pdecomposition%name == 'total' .OR. pdecomposition%name == 'advdiff') then
         !  Advection and diffusion terms
+        if (pdecomposition%name == 'advdiff') then
+            tmp3 = 0.0_wp
+            tmp4 = 0.0_wp
+            tmp5 = 0.0_wp
+        end if
         call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
         tmp3 = tmp3 + p
+        write(*,*) 'dX_dx comp'
         call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, p, tmp2, tmp1) ! tmp1 contains u transposed
         tmp4 = tmp4 + p
         call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, p, tmp2, tmp1) ! tmp1 contains u transposed
@@ -99,6 +103,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
         call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, p, tmp1) ! store v transposed in tmp1
         tmp4 = tmp4 + p
+        write(*,*) 'dY_dx comp'
         call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, p, tmp2, tmp1) ! tmp1 contains v transposed
         tmp3 = tmp3 + p
         call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, p, tmp2, tmp1) ! tmp1 contains v transposed
@@ -106,6 +111,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
         call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, p, tmp1) ! store w transposed in tmp1
         tmp5 = tmp5 + p
+        write(*,*) 'dZ_dx comp'
         call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, p, tmp2, tmp1) ! tmp1 contains w transposed
         tmp4 = tmp4 + p
         call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, p, tmp2, tmp1) ! tmp1 contains w transposed
@@ -114,6 +120,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     end if
 
     if (pdecomposition%name == 'advection' .OR. pdecomposition%name == 'diffusion') then
+        write(*,*) 'Not executed advection + diffusion'
+        tmp3 = 0.0_wp
+        tmp4 = 0.0_wp
+        tmp5 = 0.0_wp
         tmp9 = 0.0_wp
         ! Sepereating Diffusion
         ! NSE X-Comp
@@ -126,7 +136,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
         ! NSE Y-Comp
         call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, tmp9, p, tmp1)
-        tmp7 = tmp7 + p ! Diffusion d2v/dx2 + d2v/dy2 
+        tmp7 = tmp7 + p ! Diffusion d2u/dx2 + d2u/dy2
         call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, tmp9, p, tmp2, tmp1)
         tmp6 = tmp6 + p
         call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, tmp9, p, tmp2, tmp1)
@@ -134,7 +144,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
         ! NSE Z-Comp
         call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, tmp9, p, tmp1)
-        tmp8 = tmp8 + p  ! Diffusion d2w/dx2 + d2w/dy2 + d2w/dz2
+        tmp8 = tmp8 + p  ! Diffusion d2u/dx2 + d2u/dy2 + d2u/dz2
         call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, tmp9, p, tmp2, tmp1)
         tmp7 = tmp7 + p
         call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, tmp9, p, tmp2, tmp1)
@@ -146,27 +156,30 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
         tmp3 = tmp3 - tmp6
         tmp4 = tmp4 - tmp7
         tmp5 = tmp5 - tmp8
+        write(*,*) 'Not executed advection'
 
     else if (pdecomposition%name == 'diffusion') then
         tmp3 = tmp6
         tmp4 = tmp7
         tmp5 = tmp8
+        write(*,*) 'Not executed diffusion'
 
     end if
 
     ! Coriolis Forcing term
     if (pdecomposition%name == 'coriolis') then
-        call FI_CORIOLIS(coriolis,imax, jmax, kmax, q, tmp)
+        call FI_CORIOLIS(coriolis, imax, jmax, kmax, q, tmp)
         tmp3        => tmp(:, 1)
         tmp4        => tmp(:, 2)
         tmp5        => tmp(:, 3)
+        write(*,*) 'Not executed coriolis'
     end if
 
-    ! Buoyancy Forcing term
     if (pdecomposition%name == 'buoyancy') then
+        write(*,*) 'Not executed buoyancy'
         do iq = 1, 3
             if (buoyancy%type == EQNS_EXPLICIT) then
-                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, tmp1)
+                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, tmp1)
             else
                 if (buoyancy%active(iq)) then
                     if (iq == 2) then
@@ -195,6 +208,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
         tmp5        => tmp(:, 3)
 
     end if
+
 
 ! If IBM, set flag back to false
     if (imode_ibm == 1) ibm_burgers = .false.
@@ -270,7 +284,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     ! filter pressure p
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
-        call OPR_FILTER(imax, jmax, kmax, PressureFilter, p, tmp)
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp1, tmp4)
     end if
 
 ! Stagger pressure field p back on velocity grid
@@ -279,7 +293,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
         call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp1, p)
     end if
 
-    nullify (u, v, w, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, p_bcs)
+    nullify (u, v, w, tmp3, tmp4, tmp5, p_bcs)
 
     return
 end subroutine FI_PRESSURE_BOUSSINESQ

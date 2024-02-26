@@ -7,7 +7,7 @@
 #define C_FILE_LOC "IO_READ_GLOBAL"
 
 !########################################################################
-!# Reading general data from file tlab.ini, setting up general parameters
+!# Reading general data from file dns.ini, setting up general parameters
 !# and doing cross-check of these general data.
 !########################################################################
 subroutine IO_READ_GLOBAL(inifile)
@@ -60,8 +60,7 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Main]')
-    call TLAB_WRITE_ASCII(bakfile, '#FileFormat=<mpiio/NetCDF/None>')
-    call TLAB_WRITE_ASCII(bakfile, '#FileType=<Double/Single>')
+    call TLAB_WRITE_ASCII(bakfile, '#FileFormat=<mpiio/RawSplit/NetCDF>')
     call TLAB_WRITE_ASCII(bakfile, '#VerbosityLevel=<0/1/2>')
     call TLAB_WRITE_ASCII(bakfile, '#Type=<temporal/spatial>')
     call TLAB_WRITE_ASCII(bakfile, '#CalculateFlow=<yes/no>')
@@ -173,6 +172,18 @@ subroutine IO_READ_GLOBAL(inifile)
     else if (trim(adjustl(sRes)) == 'explicit') then; idiffusion = EQNS_EXPLICIT
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermDiffusion option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    call SCANINICHAR(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_NONE
+    else if (trim(adjustl(sRes)) == 'explicit') then; buoyancy%type = EQNS_EXPLICIT
+    else if (trim(adjustl(sRes)) == 'homogeneous') then; buoyancy%type = EQNS_BOD_HOMOGENEOUS
+    else if (trim(adjustl(sRes)) == 'linear') then; buoyancy%type = EQNS_BOD_LINEAR
+    else if (trim(adjustl(sRes)) == 'bilinear') then; buoyancy%type = EQNS_BOD_BILINEAR
+    else if (trim(adjustl(sRes)) == 'quadratic') then; buoyancy%type = EQNS_BOD_QUADRATIC
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermBodyForce option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
@@ -366,21 +377,6 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Buoyancy
 ! ###################################################################
-    ! I wonder if this should be part of [BodyForce] instead of [Main]
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_NONE
-    else if (trim(adjustl(sRes)) == 'explicit') then; buoyancy%type = EQNS_EXPLICIT
-    else if (trim(adjustl(sRes)) == 'homogeneous') then; buoyancy%type = EQNS_BOD_HOMOGENEOUS
-    else if (trim(adjustl(sRes)) == 'linear') then; buoyancy%type = EQNS_BOD_LINEAR
-    else if (trim(adjustl(sRes)) == 'bilinear') then; buoyancy%type = EQNS_BOD_BILINEAR
-    else if (trim(adjustl(sRes)) == 'quadratic') then; buoyancy%type = EQNS_BOD_QUADRATIC
-    else if (trim(adjustl(sRes)) == 'normalizedmean') then; buoyancy%type = EQNS_BOD_NORMALIZEDMEAN
-    else if (trim(adjustl(sRes)) == 'subtractmean') then; buoyancy%type = EQNS_BOD_SUBTRACTMEAN
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermBodyForce option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[BodyForce]')
     call TLAB_WRITE_ASCII(bakfile, '#Vector=<Gx,Gy,Gz>')
@@ -397,7 +393,7 @@ subroutine IO_READ_GLOBAL(inifile)
         if (abs(buoyancy%vector(3)) > 0.0_wp) then; buoyancy%active(3) = .true.; call TLAB_WRITE_ASCII(lfile, 'Body force along Oz.'); end if
 
         if (froude > 0.0_wp) then
-            buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into the vector g
+            buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into de vector g
         else
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Froude number must be nonzero if buoyancy is retained.')
             call TLAB_STOP(DNS_ERROR_OPTION)
@@ -407,7 +403,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call SCANINICHAR(bakfile, inifile, 'BodyForce', 'Parameters', '0.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, buoyancy%parameters)
-        buoyancy%scalar(1) = idummy
 
     end if
 
@@ -1043,10 +1038,9 @@ subroutine IO_READ_GLOBAL(inifile)
 ! Pressure decomposition
 ! ###################################################################
     ! read decomposition parameters
-    call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
+    call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PressureDecomposition', 'none', sRes)
     if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomposition%name = 'total'
     else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomposition%name = 'total'
-    else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomposition%name = 'resolved'
     else if ( TRIM(ADJUSTL(sRes)) == 'advdiff'  ) then; pdecomposition%name = 'advdiff' 
     else if ( TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomposition%name = 'advection'
     else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomposition%name = 'diffusion'
@@ -1056,7 +1050,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. IO_READ_GLOBAL. Wrong Pressure decomposition option.')
         call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
     end if
-
     return
 end subroutine IO_READ_GLOBAL
 
