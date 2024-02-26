@@ -1,0 +1,54 @@
+[IniGridOx       ]
+segments=<number of segments>
+periodic=<yes/no>
+mirrored=<yes/no>
+fixed_scale=<value>
+segments=1
+periodic=yes
+mirrored=no
+fixed_scale=-1.0
+Segment number 1
+scales_1=<physical end of the segment>
+points_1=<points in the segment>
+opts_1=<option>
+vals_1=<values>
+points_1=1025
+scales_1=0.5
+opts_1=uniform
+vals_1=1.0
+[IniGridOy       ]
+segments=<number of segments>
+periodic=<yes/no>
+mirrored=<yes/no>
+fixed_scale=<value>
+segments=1
+periodic=no
+mirrored=no
+fixed_scale=-1.0
+Segment number 1
+scales_1=<physical end of the segment>
+points_1=<points in the segment>
+opts_1=<option>
+vals_1=<values>
+points_1=512
+scales_1=2
+opts_1=tanh
+vals_1=0.21,6.0,0.0168, 0,-0.75,-0.06
+[IniGridOz       ]
+segments=<number of segments>
+periodic=<yes/no>
+mirrored=<yes/no>
+fixed_scale=<value>
+segments=1
+periodic=yes
+mirrored=no
+fixed_scale=-1.0
+Segment number 1
+scales_1=<physical end of the segment>
+points_1=<points in the segment>
+opts_1=<option>
+vals_1=<values>
+points_1=1025
+scales_1=4
+opts_1=uniform
+vals_1=1.0
